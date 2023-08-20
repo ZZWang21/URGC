@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+    <!-- A global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+    <!-- A ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+    
+    
+    <include>
+    <model name="yourmodel">
+        <link name='yourlink'>
+         <self_collide>false</self_collide>
+          <pose>1.0000 1.0000 0.0000 0.000 0.000 0.000</pose>
+
+          <collision name='yourlink'>
+            <geometry>
+            <box><size>0.6 0.5 0.34</size></box>
+            </geometry>                 
+          </collision>
+          <visual name='yourlink'>
+          <geometry>
+             <box><size>0.6 0.5 0.34</size></box>
+          </geometry>
+        </visual>
+      </link>    
+     </model>
+    </include>
+  </world>
+</sdf>

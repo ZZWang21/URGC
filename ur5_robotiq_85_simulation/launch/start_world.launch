@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+  <!--arg name="world_name" default="$(find gazebo_ros)/worlds/empty_world.world"/-->
+  <arg name="world_name" default="/home/walter/.gazebo/worlds/ur5e_ball.world"/>
+  
+    <!-- GAZEBO arguments -->
+    <arg name="paused" default="false" />
+    <arg name="use_sim_time" default="true" />
+    <arg name="gui" default="true" />
+    <arg name="headless" default="false" />
+    <arg name="debug" default="false" />
+    
+    <arg name="physics" value="ode"/> ADDED ZZW 20221224
+
+    <!--launch GAZEBO with own world configuration -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="verbose" value="false" />ORI: true    
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="debug" value="$(arg debug)" />
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="use_sim_time" value="$(arg use_sim_time)" />
+        <arg name="headless" value="$(arg headless)" />
+    </include>
+    
+</launch>

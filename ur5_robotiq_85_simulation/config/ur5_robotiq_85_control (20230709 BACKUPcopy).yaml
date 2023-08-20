@@ -1,0 +1,110 @@
+    # Publish joint states
+    arm_controller_force:
+        type: "position_controllers/CartesianForceController"
+        end_effector_link: "tool0"
+        robot_base_link: "base_link"
+        ft_sensor_ref_link: "wrist_3_link"
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+
+        solver:
+          error_scale: 0.5
+
+        pd_gains:
+          trans_x: {p: 0.05}
+          trans_y: {p: 0.05}
+          trans_z: {p: 0.05}
+          rot_x: {p: 1.5}
+          rot_y: {p: 1.5}
+          rot_z: {p: 1.5}
+          
+    arm_controller_compliance:
+        type: "position_controllers/CartesianComplianceController"
+        end_effector_link: "tool0"
+        robot_base_link: "base_link"
+        ft_sensor_ref_link: "wrist_3_link"
+        compliance_ref_link: "tool0" #wrist_3_link
+        target_frame_topic: "target_frame"
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+          
+        stiffness:  # w.r.t. compliance_ref_link
+          trans_x: 500
+          trans_y: 500
+          trans_z: 500
+          rot_x: 20
+          rot_y: 20
+          rot_z: 20
+
+        solver:
+          error_scale: 0.5
+
+        pd_gains:
+          trans_x: {p: 0.05}
+          trans_y: {p: 0.05}
+          trans_z: {p: 0.05}
+          rot_x: {p: 1.5}
+          rot_y: {p: 1.5}
+          rot_z: {p: 1.5}
+          
+    arm_controller_handle:
+        type: "cartesian_controllers/MotionControlHandle"
+        end_effector_link: "tool0"
+        robot_base_link: "base_link"
+        target_frame_topic: "/my_cartesian_motion_controller/target_frame"
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+          
+    arm_controller:
+        type: position_controllers/JointTrajectoryController
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        constraints:
+            goal_time: 2.0
+        state_publish_rate: 100
+        
+    joint_state_controller:
+        type: joint_state_controller/JointStateController
+        publish_rate: 100
+
+    gripper_controller:
+        type: position_controllers/JointTrajectoryController
+        joints:
+            - simple_gripper_gripper_finger1_joint
+        state_publish_rate: 25
+
+    joint_position_controller:
+        type: ur5_robotiq_85_simulation/JointPositionController
+        arm_id: arm
+        joint_names:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        gains: [
+            1, 1, 1, 1, 1, 1
+        ]
+
+        

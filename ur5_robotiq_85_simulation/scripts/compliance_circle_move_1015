@@ -1,0 +1,171 @@
+#!/usr/bin/env python
+
+"""
+    moveit_cartesian_path.py - Version 0.1 2016-07-28
+    Based on the R. Patrick Goebel's moveit_cartesian_demo.py demo code.
+    Plan and execute a Cartesian path for the end-effector.
+    Created for the Pi Robot Project: http://www.pirobot.org
+    Copyright (c) 2014 Patrick Goebel.  All rights reserved.
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation; either version 2 of the License, or
+    (at your option) any later version.5
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details at:
+    http://www.gnu.org/licenses/gpl.html
+"""
+
+import rospy, sys, numpy as np
+import moveit_commander
+from copy import deepcopy
+import geometry_msgs.msg
+import std_msgs.msg
+import moveit_msgs.msg
+from geometry_msgs.msg import WrenchStamped
+from std_msgs.msg import Float64
+from std_msgs.msg import Header
+
+from trajectory_msgs.msg import JointTrajectory
+from trajectory_msgs.msg import JointTrajectoryPoint
+
+import threading
+from multiprocessing import Process
+
+#import PID
+import time 
+import os.path
+import math
+
+class MoveItCartesianPath:
+    def __init__(self):
+        rospy.init_node("moveit_cartesian_path", anonymous=False)
+
+        rospy.loginfo("Starting node moveit_cartesian_path")
+
+        rospy.on_shutdown(self.cleanup)
+
+        # Initialize the move_group API
+        moveit_commander.roscpp_initialize(sys.argv)
+
+        # Initialize the move group for the ur5_arm
+        self.arm = moveit_commander.MoveGroupCommander('manipulator') #manipulator for real arm; arm for gazebo
+
+        # Get the name of the end-effector link
+        end_effector_link = self.arm.get_end_effector_link()
+
+        # Set the reference frame for pose targets
+        reference_frame = "base_link" #/base_link
+
+        # Set the ur5_arm reference frame accordingly
+        self.arm.set_pose_reference_frame(reference_frame)
+
+        # Allow replanning to increase the odds of a solution
+        self.arm.allow_replanning(True)
+
+        # Allow some leeway in position (meters) and orientation (radians)
+        self.arm.set_goal_position_tolerance(0.01)
+        self.arm.set_goal_orientation_tolerance(0.01)
+
+        # Get the current pose so we can add it as a waypoint
+        start_pose = self.arm.get_current_pose(end_effector_link).pose
+        rospy.loginfo(start_pose) #ADDED 20220729
+
+        # Initialize the waypoints list
+        waypoints = []
+
+        # Set the first waypoint to be the starting pose
+        # Append the pose to the waypoints list
+        wpose = deepcopy(start_pose)
+
+        # 20221013 input x, y distance for the compliance movement to implement: 
+        print('Please input the direction of the circle: ')
+        xory =  input(" x or y : ") #python2.7 raw_input
+        if not (xory == 'x' or xory == 'y') :
+            print("x,y input wrong")
+            sys.exit()
+
+        print('Please input the plus or minus:')
+
+        plusorminus =  input("Symbol of + or - : ")
+        if not (plusorminus == '+' or plusorminus == '-') :
+            print("+,- input wrong")
+            sys.exit()
+        
+        print('Please input the radius: ')
+        radius =  float(input("The radius (m)(0.00): "))
+        if radius > 0.5:
+            print('Radius too large!')
+            sys.exit()
+
+        #### the ANGLE Resolution is very important: ###
+        anglereso = 6
+
+        if xory == 'x':
+            if plusorminus == '+':
+                X_centre = wpose.position.x + radius
+                Y_centre = wpose.position.y
+                for i in range (0, 61):
+                    wpose.position.x = X_centre - math.cos(i*anglereso*3.14/180)*radius
+                    wpose.position.y = Y_centre + math.sin(i*anglereso*3.14/180)*radius
+                    waypoints.append(deepcopy(wpose))
+                    print('i ==', i)
+                    i = i+1
+            if plusorminus == '-' :
+                X_centre = wpose.position.x - radius
+                Y_centre = wpose.position.y
+                for i in range (0, 360/anglereso+1):
+                    wpose.position.x = X_centre + math.cos(i*anglereso*3.14/180)*radius
+                    wpose.position.y = Y_centre - math.sin(i*anglereso*3.14/180)*radius
+                    waypoints.append(deepcopy(wpose))
+                    print("i ==", i)
+                    i = i+1
+
+        if xory == 'y':
+            if plusorminus == '+':
+                X_centre = wpose.position.x 
+                Y_centre = wpose.position.y + radius
+                for i in range (0, 360/anglereso+1):
+                    wpose.position.x = X_centre - math.sin(i*anglereso*3.14/180)*radius
+                    wpose.position.y = Y_centre - math.cos(i*anglereso*3.14/180)*radius
+                    waypoints.append(deepcopy(wpose))
+                    print("i ==", i, wpose.position.x, wpose.position.y)
+                    i = i+1
+            if plusorminus == '-' :
+                X_centre = wpose.position.x 
+                Y_centre = wpose.position.y - radius
+                for i in range (0, 360/anglereso+1):
+                    wpose.position.x = X_centre + math.sin(i*anglereso*3.14/180)*radius
+                    wpose.position.y = Y_centre + math.cos(i*anglereso*3.14/180)*radius
+                    waypoints.append(deepcopy(wpose))
+                    print("i ==", i)
+                    i = i+1
+
+        #wpose.position.x = wpose.position.x + pose_goal_x
+        #wpose.position.y = wpose.position.y + pose_goal_y
+        #wpose.position.z = wpose.position.z + pose_goal_z
+            
+            
+        plan, fraction = self.arm.compute_cartesian_path(waypoints, 0.001, 0.0, True) 
+        self.arm.execute(plan) 
+        
+
+            
+    def cleanup(self):
+        rospy.loginfo("Stopping the robot")
+
+        # Stop any current arm movement
+        self.arm.stop()
+
+        #Shut down MoveIt! cleanly
+        rospy.loginfo("Shutting down Moveit!")
+        moveit_commander.roscpp_shutdown()
+        moveit_commander.os._exit(0)
+
+
+if __name__ == "__main__":    
+    try:
+        MoveItCartesianPath()
+    except KeyboardInterrupt:
+        print("Shutting down MoveItCartesianPath node.")

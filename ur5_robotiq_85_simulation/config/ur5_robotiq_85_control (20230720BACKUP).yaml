@@ -1,0 +1,120 @@
+    # Publish joint states
+    arm_controller_force:
+        type: "position_controllers/CartesianForceController"
+        end_effector_link: "camera_link"
+        robot_base_link: "base_link"
+        ft_sensor_ref_link: "camera_link" #wrist_3_link  tool0
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        # This is new:
+        hand_frame_control: False  #  The commanded target wrench is now with respect to the robot's base link
+
+        solver:
+          error_scale: 0.7
+          iterations: 1
+          forward_dynamics:
+              link_mass: 1.0  # Higher values decrease oscillations in fully stretched configurations
+                               #error_scale: 0.5
+
+        pd_gains:
+          trans_x: {p: 1,d: 0.05} #p 0.05
+          trans_y: {p: 1,d: 0.05}
+          trans_z: {p: 1,d: 0.05}
+          rot_x: {p: 1.5}
+          rot_y: {p: 1.5}
+          rot_z: {p: 1.5}
+          
+    arm_controller_compliance:
+        type: "position_controllers/CartesianComplianceController"
+        end_effector_link: "camera_link"
+        robot_base_link: "base_link"
+        ft_sensor_ref_link: "wrist_3_link" #wrist_3_link
+        compliance_ref_link: "camera_link" #ORI: tool0, wrist_3_link camera_link 
+        target_frame_topic: "target_frame"
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        hand_frame_control: False  #  The commanded target wrench is now with respect to the robot's base link
+          
+        stiffness:  # w.r.t. compliance_ref_link
+           trans_x: 800 #200
+           trans_y: 800
+           trans_z: 800
+           rot_x: 40 #20
+           rot_y: 40
+           rot_z: 40
+        solver:
+           error_scale: 2 #0.2
+           iterations: 1
+           forward_dynamics:
+              link_mass: 1.0 
+        pd_gains:
+           trans_x: {p: 0.3} #d: 0.015
+           trans_y: {p: 0.3} #d: 0.015
+           trans_z: {p: 0.3, d: 1} #d: 0.015
+           rot_x: {p: 0.01}  #d: 0.01
+           rot_y: {p: 0.01}  #d: 0.01
+           rot_z: {p: 0.01}  #d: 0.01
+          
+        
+    arm_controller_handle:
+        type: "cartesian_controllers/MotionControlHandle"
+        end_effector_link: "camera_link" #tool0  camera_link
+        robot_base_link: "base_link"
+        target_frame_topic: "/arm_controller/target_frame"
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+          
+    arm_controller:
+        type: position_controllers/JointTrajectoryController
+        joints:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        constraints:
+            goal_time: 2.0
+        state_publish_rate: 100
+        target_frame_topic: "target_frame" #20230715 NEW
+        
+    joint_state_controller:
+        type: joint_state_controller/JointStateController
+        publish_rate: 100
+
+    gripper_controller:
+        type: position_controllers/JointTrajectoryController
+        joints:
+            - simple_gripper_gripper_finger1_joint
+        state_publish_rate: 25
+
+    joint_position_controller:
+        type: ur5_robotiq_85_simulation/JointPositionController
+        arm_id: arm
+        joint_names:
+          - shoulder_pan_joint
+          - shoulder_lift_joint
+          - elbow_joint
+          - wrist_1_joint
+          - wrist_2_joint
+          - wrist_3_joint
+        gains: [
+            1, 1, 1, 1, 1, 1
+        ]
+
+        

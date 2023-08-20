@@ -1,0 +1,86 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro"
+       name="ur5e_robotiq" >
+  
+
+  <!-- common stuff -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur_common.xacro" />
+  <!-- common stuff 20221222 -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/common.gazebo.xacro" />
+
+  <!-- ur5e -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur5e_sim_macro.xacro" />
+  <!-- gripper -->
+  <xacro:include filename="$(find robotiq_85_description)/urdf/robotiq_85_gripper.urdf.xacro" />
+
+
+  <!-- arm -->
+  <xacro:ur5e_robot prefix="" />
+  <!--joint_limited="false"-->
+  <!-- gripper -->
+  <xacro:robotiq_85_gripper prefix="simple_gripper_" parent="camera_link" > 
+  <!--origin xyz="0 0 0 " rpy="${pi/2.0} ${pi/2.0} 0 "/-->
+     <origin xyz="0 0 0.005 " rpy="${pi/2.0} -${pi/2.0} 0"/>
+    </xacro:robotiq_85_gripper>
+
+  <!-- ZZW 20221123 ADD THE CUBE IN THE RVIZ -->
+  <!--xacro:ccube prefix="" parent="base_link">
+     <origin xyz="0.6 0.1 0.8 " rpy="0 0 0"/>
+    </xacro:ccube -->    
+
+  
+  <link name="world" />
+
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link = "base_link" />
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+
+
+<!-- camera -->
+  <gazebo reference="shoot_link">
+   <pose frame=''>0 0 0.1 0 1.7 0</pose> ADDED 20220120
+    <sensor type="camera" name="camera1">
+      <update_rate>30.0</update_rate>
+      <camera name="wristcamera">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <!--aspect_ratio>1.8</aspect_ratio--> ADDED 20220120
+        <image>
+          <width>800</width>
+          <height>800</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>300</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <!-- Noise is sampled independently per pixel on each frame.
+               That pixel's noise value is added to each of its color
+               channels, which at that point lie in the range [0,1]. -->
+          <mean>0.0</mean>
+          <stddev>0.007</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <!--visualize>true</visualize--> ADDED 20220122
+        <alwaysOn>true</alwaysOn>
+        <updateRate>0.0</updateRate>
+        <cameraName>rrbot/camera1</cameraName>
+        <imageTopicName>image_raw</imageTopicName>
+        <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+        <frameName>camera_link</frameName>
+        <hackBaseline>0.07</hackBaseline>
+        <distortionK1>0.0</distortionK1>
+        <distortionK2>0.0</distortionK2>
+        <distortionK3>0.0</distortionK3>
+        <distortionT1>0.0</distortionT1>
+        <distortionT2>0.0</distortionT2>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+
+</robot>
